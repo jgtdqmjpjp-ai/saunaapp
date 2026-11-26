@@ -115,7 +115,9 @@ export function speak(text: string, voices: SpeechSynthesisVoice[], p: number, u
   u.lang = "ja-JP";
   if (voices.length > 0) u.voice = voices[p % voices.length];
   u.pitch = p < 0 ? 1 : PITCH[p % PITCH.length];
-  u.rate = urgent ? 1.35 : 1.2;
+  // iOS Safariなどは同じrateでも速く再生されるため、スマホでは明示的に遅くする。
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  u.rate = urgent ? (isMobile ? 0.75 : 1.15) : (isMobile ? 0.6 : 1.0);
   lastSpeakAt = Date.now();
   ss.speak(u);
 }

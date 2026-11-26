@@ -257,7 +257,7 @@ export default function Home() {
     ev && (
       <div
         key={`${ev.t}`}
-        className={`a-pop whitespace-nowrap rounded-xl border-2 px-2 py-1 text-xs font-bold shadow-lg sm:text-sm ${
+        className={`a-pop max-w-[42vw] whitespace-normal break-words rounded-xl border-2 px-2 py-1 text-center text-xs font-bold leading-tight shadow-lg sm:max-w-none sm:whitespace-nowrap sm:text-sm ${
           ev.leave
             ? "border-red-600 bg-red-100 text-red-700"
             : ev.action
@@ -309,7 +309,7 @@ export default function Home() {
   const feelPreview = allSet ? Math.round(feelTemp(values[0]!, values[1]!)) : null;
 
   return (
-    <main className="min-h-screen w-full bg-stone-900 text-white">
+    <main className="app-shell w-full bg-stone-900 text-white">
       <style>{`
 @keyframes pop{0%{transform:scale(0);opacity:0}70%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
 @keyframes banner{0%{transform:scale(.3);opacity:0}15%{transform:scale(1.15);opacity:1}25%{transform:scale(1)}75%{opacity:1}100%{opacity:0;visibility:hidden}}
@@ -487,7 +487,7 @@ export default function Home() {
         {isScene && run && (
           <div>
             {timerBar()}
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border-4 border-stone-700 bg-black sm:aspect-[16/10]">
+            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border-4 border-stone-700 bg-black sm:aspect-[16/10]">
               <div ref={mountRef} className="absolute inset-0" />
               <div className="pointer-events-none absolute inset-0 z-10">
                 {run.sauners.map((_, p) => (
