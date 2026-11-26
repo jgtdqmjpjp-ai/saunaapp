@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Ev, Phase, Run, Scene } from "./_sauna/types";
 import { BUBBLE_MS, GAUGES, GAUGE_PERIOD, MOOD_ICON, NEXT, SCENE_DUR, SCENE_TITLE, TITLES, VERDICT_DESC, WALKOUT_MS } from "./_sauna/constants";
 import { adviceOf, feelTemp, generateRun } from "./_sauna/scoring";
-import { SFX, playResultSounds, playSceneSounds, speak, unlockSpeech } from "./_sauna/sound";
+import { SFX, playResultSounds, playSceneSounds, speak, stopSpeech, unlockSpeech } from "./_sauna/sound";
 import type { Sound } from "./_sauna/sound";
 import { EMPTY_SAVE, clearSave, loadSave, writeSave } from "./_sauna/storage";
 import type { SaveData } from "./_sauna/storage";
@@ -161,7 +161,10 @@ export default function Home() {
         setElapsed(e);
       }
     }, 100);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      stopSpeech();
+    };
   }, [phase]);
 
   // ===== 3D描画 =====
@@ -246,6 +249,7 @@ export default function Home() {
     if (!run) return null;
     let found: Ev | null = null;
     for (const ev of run.scripts[scene]) {
+      if (ev.action) continue;
       if (ev.p !== p || ev.t > elapsed) continue;
       const until = ev.leave ? ev.t + WALKOUT_MS : ev.t + BUBBLE_MS;
       if (elapsed < until) found = ev;
@@ -253,7 +257,7 @@ export default function Home() {
     return found;
   };
 
-  const renderBubble = (ev: Ev | null) =>
+  const renderBubble = (ev: Ev | null, p: number) =>
     ev && (
       <div
         key={`${ev.t}`}
@@ -266,6 +270,7 @@ export default function Home() {
         }`}
         style={{ transformOrigin: "bottom center" }}
       >
+        <span className="mr-1 inline-block rounded bg-black/15 px-1 text-[0.65rem] font-black">#{p + 1}</span>
         {ev.leave && "🚪 "}
         {ev.text}
       </div>
@@ -499,7 +504,7 @@ export default function Home() {
                     className="absolute left-0 top-0"
                     style={{ display: "none" }}
                   >
-                    {renderBubble(bubbleFor(phase, p))}
+                    {renderBubble(bubbleFor(phase, p), p)}
                   </div>
                 ))}
               </div>

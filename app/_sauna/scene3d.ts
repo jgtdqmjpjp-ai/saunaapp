@@ -638,18 +638,27 @@ export function startScene(opts: {
       f.head.getWorldPosition(v);
       v.y += 0.55;
       v.project(world.camera);
-      const x = ((v.x + 1) / 2) * w;
+      const rawX = ((v.x + 1) / 2) * w;
       const y = ((1 - v.y) / 2) * h;
       const bubble = el.firstElementChild as HTMLElement | null;
       const bubbleWidth = bubble?.offsetWidth || 120;
       const bubbleHeight = bubble?.offsetHeight || 28;
+      const x = Math.max(bubbleWidth / 2 + 4, Math.min(w - bubbleWidth / 2 - 4, rawX));
       let lift = 0;
-      // 縦画面で吹き出しが重なったら、先に表示された吹き出しの上へ積む。
-      for (let attempt = 0; attempt < 4; attempt++) {
+      let placed = false;
+      // 縦画面で吹き出しが重なったら、上へずらす。上限まで空きがなければ隠して重なりを防ぐ。
+      while (y - bubbleHeight - lift >= 4) {
         const box = { left: x - bubbleWidth / 2, top: y - bubbleHeight - lift, right: x + bubbleWidth / 2, bottom: y - lift };
         const overlaps = placedBubbles.some((other) => box.left < other.right && box.right > other.left && box.top < other.bottom && box.bottom > other.top);
-        if (!overlaps) break;
+        if (!overlaps) {
+          placed = true;
+          break;
+        }
         lift += bubbleHeight + 6;
+      }
+      if (!placed) {
+        el.style.display = "none";
+        return;
       }
       placedBubbles.push({ left: x - bubbleWidth / 2, top: y - bubbleHeight - lift, right: x + bubbleWidth / 2, bottom: y - lift });
       el.style.transform = `translate(${x}px, ${y - lift}px) translate(-50%, -100%)`;

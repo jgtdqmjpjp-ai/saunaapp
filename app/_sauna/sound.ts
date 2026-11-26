@@ -86,6 +86,11 @@ export const PITCH = [0.7, 1.3, 0.9, 1.6, 0.5, 1.1, 1.45, 0.8, 1.2, 1.0];
 
 let speechUnlocked = false;
 let lastSpeakAt = 0;
+const spokenSceneEvents = new Set<string>();
+
+export function stopSpeech() {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+}
 
 // スマホ（特にiPhone）は、「タップした操作の中」で一度声を出さないと、
 // あとからタイマーで呼んでも鳴らないことがある。
@@ -117,7 +122,7 @@ export function speak(text: string, voices: SpeechSynthesisVoice[], p: number, u
   u.pitch = p < 0 ? 1 : PITCH[p % PITCH.length];
   // iOS Safariなどは同じrateでも速く再生されるため、スマホでは明示的に遅くする。
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  u.rate = urgent ? (isMobile ? 0.75 : 1.15) : (isMobile ? 0.6 : 1.0);
+  u.rate = urgent ? (isMobile ? 0.9 : 1.15) : (isMobile ? 0.78 : 1.0);
   lastSpeakAt = Date.now();
   ss.speak(u);
 }
@@ -125,6 +130,7 @@ export function speak(text: string, voices: SpeechSynthesisVoice[], p: number, u
 // シーン中のイベント（前回tick〜今回tickの間に起きたもの）に合わせて音を鳴らす
 export function playSceneSounds(scene: Scene, run: Run, prev: number, e: number, a: Sound | null, voices: SpeechSynthesisVoice[], soundOn: boolean) {
   if (!soundOn) return;
+  if (prev < 0) spokenSceneEvents.clear();
   const crossed = (t: number) => prev < t && t <= e;
   if (a && prev < 0) {
     SFX.banner(a);
@@ -136,7 +142,11 @@ export function playSceneSounds(scene: Scene, run: Run, prev: number, e: number,
     }
   }
   for (const ev of run.scripts[scene]) {
-    if (crossed(ev.t) && !ev.action) speak(ev.speech ?? ev.text, voices, ev.p, !!ev.leave);
+    const eventKey = `${scene}:${ev.p}:${ev.t}:${ev.leave ? "leave" : "line"}`;
+    if (crossed(ev.t) && !ev.action && !spokenSceneEvents.has(eventKey)) {
+      spokenSceneEvents.add(eventKey);
+      speak(ev.speech ?? ev.text, voices, ev.p, !!ev.leave);
+    }
     if (!a || !ev.leave) continue;
     if (scene === "water" && crossed(ev.t)) SFX.smallSplash(a);
     for (let k = 0; k < 6; k++) if (crossed(ev.t + WALKOUT_MS * 0.25 + k * 280)) SFX.step(a);
